@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { supabaseClient } from "./supabClient";
-import pipwerks from "pipwerks-scorm-api-wrapper";
-// Import pipwerks SCORM API wrapper
+import { supabaseClient } from "./supabClient"; // Ensure the correct import path
 
 const LearnerDashboard = () => {
   const [courses, setCourses] = useState([]);
@@ -11,10 +9,8 @@ const LearnerDashboard = () => {
   // Fetch courses from Supabase
   const fetchCourses = async () => {
     try {
-      console.log("Supabase Client in LearnerDashboard:", supabaseClient);
       const { data, error } = await supabaseClient.from("courses").select("*");
       if (error) throw error;
-      console.log("Fetched courses:", data);
       setCourses(data || []);
     } catch (error) {
       console.error("Error fetching courses:", error.message);
@@ -24,27 +20,31 @@ const LearnerDashboard = () => {
     }
   };
 
-  // Initialize SCORM
-  const initializeSCORM = (course) => {
-    try {
-      const initialized = pipwerks.SCORM.init();
-      if (initialized) {
-        console.log("SCORM initialized successfully.");
-        const lessonStatus = pipwerks.SCORM.get("cmi.core.lesson_status");
-        console.log(`Lesson Status: ${lessonStatus}`);
-        setSelectedCourse(course);
-      } else {
-        console.error("SCORM initialization failed.");
-      }
-    } catch (error) {
-      console.error("Error initializing SCORM:", error);
+  // Initialize SCORM tracking (only when a course is selected)
+  const initializeSCORM = () => {
+    if (!window.pipwerks) {
+      console.error("SCORM API wrapper not loaded!");
+      return;
+    }
+    const scorm = window.pipwerks.SCORM;
+    scorm.version = "1.2"; // SCORM version
+    const initSuccess = scorm.init();
+    if (initSuccess) {
+      console.log("SCORM initialized successfully!");
+    } else {
+      console.error("Failed to initialize SCORM.");
     }
   };
 
-  // Load courses when the component mounts
   useEffect(() => {
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    if (selectedCourse) {
+      initializeSCORM(); // Initialize SCORM when a course is selected
+    }
+  }, [selectedCourse]);
 
   return (
     <div>
@@ -53,14 +53,7 @@ const LearnerDashboard = () => {
         <p>Loading...</p>
       ) : selectedCourse ? (
         <div>
-          <button
-            onClick={() => {
-              pipwerks.SCORM.finish(); // End SCORM session when returning to courses
-              setSelectedCourse(null);
-            }}
-          >
-            Back to Courses
-          </button>
+          <button onClick={() => setSelectedCourse(null)}>Back to Courses</button>
           <iframe
             src={selectedCourse.scorm_url}
             title={selectedCourse.title}
@@ -69,6 +62,7 @@ const LearnerDashboard = () => {
               height: "90vh",
               border: "none",
             }}
+            onLoad={initializeSCORM} // Ensure SCORM initializes on iframe load
           />
         </div>
       ) : courses.length === 0 ? (
@@ -79,9 +73,7 @@ const LearnerDashboard = () => {
             <li key={course.id} style={{ marginBottom: "20px" }}>
               <h2>{course.title}</h2>
               <p>{course.description}</p>
-              <button onClick={() => initializeSCORM(course)}>
-                Launch Course
-              </button>
+              <button onClick={() => setSelectedCourse(course)}>Launch Course</button>
             </li>
           ))}
         </ul>
