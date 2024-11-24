@@ -11,13 +11,15 @@
     "react-router-dom": "7.0.1",
     "@supabase/supabase-js": "2.46.1",
     "pipwerks-scorm-api-wrapper": "0.1.2",
-    "@upandgo/scorm-wrapper": "3.2.0"
+    "@upandgo/scorm-wrapper": "3.2.0",
+    "formidable": "^2.1.1" // Added dependency for file uploads
   },
   "devDependencies": {
     "@types/react": "18.2.38",
     "@types/react-dom": "18.2.15",
     "loader-utils": "3.2.1",
-    "typescript": "4.4.4"
+    "typescript": "4.4.4",
+    "@types/formidable": "^2.0.4" // Added types for formidable
   },
   "scripts": {
     "start": "react-scripts start",
